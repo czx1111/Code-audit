@@ -104,30 +104,12 @@ Code Audit MCP Server 是一个基于 Model Context Protocol (MCP) 的 AI 原生
 - Node.js >= 18.0
 - npm >= 9.0
 
-### 方式一：从 GitHub 克隆（推荐）
+直接下载
 
-```bash
-# 克隆仓库
-git clone https://github.com/your-username/code-audit-mcp-server.git
+# 下载项目
+[https://github.com/czx1111/Code-audit-MCP]
 
-# 进入项目目录
-cd code-audit-mcp-server
 
-# 安装依赖
-npm install
-
-# 构建项目
-npm run build
-```
-
-### 方式二：直接下载
-
-```bash
-# 下载 ZIP 包
-wget https://github.com/your-username/code-audit-mcp-server/archive/refs/heads/main.zip
-
-# 解压
-unzip main.zip
 cd code-audit-mcp-server-main
 
 # 安装依赖并构建
@@ -179,7 +161,7 @@ node dist/index.js --version
   "mcpServers": {
     "code-audit": {
       "command": "node",
-      "args": ["D:/MCP/code-audit-mcp-server/dist/index.js"]
+      "args": ["D:/yourpath/code-audit-mcp-server/dist/index.js"]
     }
   }
 }
@@ -193,26 +175,8 @@ node dist/index.js --version
 {
   "name": "code-audit",
   "command": "node",
-  "args": ["/path/to/code-audit-mcp-server/dist/index.js"]
+  "args": ["/path"]
 }
-```
-
-### 环境变量配置（可选）
-
-如果需要使用 AI 深度审计功能，配置 API Key：
-
-```bash
-# macOS/Linux
-export OPENAI_API_KEY="sk-..."
-export ANTHROPIC_API_KEY="sk-ant-..."
-
-# Windows PowerShell
-$env:OPENAI_API_KEY="sk-..."
-$env:ANTHROPIC_API_KEY="sk-ant-..."
-
-# Windows CMD
-set OPENAI_API_KEY=sk-...
-set ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ---
