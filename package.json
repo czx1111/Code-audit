@@ -1,0 +1,73 @@
+{
+  "name": "code-audit-mcp-server",
+  "version": "1.0.0",
+  "description": "AI-Native Code Security Audit MCP Server - Multi-language AST analysis, call graph analysis, vulnerability detection, AI deep audit",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "bin": {
+    "code-audit-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "code-audit",
+    "security",
+    "vulnerability",
+    "ast",
+    "call-graph",
+    "ai"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@babel/parser": "^7.24.0",
+    "@babel/traverse": "^7.24.0",
+    "@babel/types": "^7.24.0",
+    "axios": "^1.7.9",
+    "tree-sitter": "^0.21.0",
+    "tree-sitter-python": "^0.21.0",
+    "tree-sitter-javascript": "^0.21.0",
+    "tree-sitter-typescript": "^0.21.0",
+    "tree-sitter-go": "^0.21.0",
+    "tree-sitter-java": "^0.21.0",
+    "tree-sitter-php": "^0.22.0",
+    "tree-sitter-rust": "^0.21.0",
+    "glob": "^10.3.0",
+    "micromatch": "^4.0.5",
+    "zod": "^3.23.8",
+    "uuid": "^9.0.0",
+    "chalk": "^5.3.0",
+    "yaml": "^2.3.4",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/uuid": "^9.0.0",
+    "@types/micromatch": "^4.0.6",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "rimraf": "^5.0.5",
+    "vitest": "^1.2.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.56.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/code-audit-mcp-server"
+  },
+  "license": "MIT",
+  "author": "Code Audit Team"
+}

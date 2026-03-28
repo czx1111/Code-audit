@@ -1,0 +1,549 @@
+# Code Audit MCP Server - 扩展安全规则库
+# 基于 OWASP Top 10 和 CWE 常见漏洞
+
+rules:
+  # ============================================================================
+  # 注入类漏洞 (OWASP A03:2021)
+  # ============================================================================
+  
+  - id: SQL_INJECTION_FORMAT
+    name: "SQL注入 (字符串格式化)"
+    description: "检测使用字符串格式化构建SQL查询的情况"
+    category: injection
+    severity: high
+    languages:
+      - python
+    cwe: CWE-89
+    owasp: A03:2021
+    enabled: true
+    tags:
+      - sql
+      - injection
+      - database
+    patterns:
+      - pattern: "\\.format\\s*\\([^)]*\\).*SELECT"
+        message: "使用.format()构建SQL查询"
+    fixSuggestion: |
+      使用参数化查询:
+      cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+
+  - id: SQL_INJECTION_CONCAT
+    name: "SQL注入 (字符串拼接)"
+    description: "检测使用字符串拼接构建SQL查询的情况"
+    category: injection
+    severity: high
+    languages:
+      - javascript
+      - typescript
+    cwe: CWE-89
+    owasp: A03:2021
+    enabled: true
+    tags:
+      - sql
+      - injection
+    patterns:
+      - pattern: "SELECT.*\\+"
+        message: "使用字符串拼接构建SQL查询"
+    fixSuggestion: |
+      使用参数化查询:
+      db.query('SELECT * FROM users WHERE id = $1', [userId]);
+
+  # 命令注入
+  - id: COMMAND_INJECTION_SUBPROCESS_SHELL
+    name: "命令注入风险 (subprocess shell=True)"
+    description: "检测使用subprocess调用时设置shell=True的情况"
+    category: injection
+    severity: critical
+    languages:
+      - python
+    cwe: CWE-78
+    owasp: A03:2021
+    enabled: true
+    tags:
+      - command
+      - injection
+      - rce
+    patterns:
+      - pattern: "subprocess\\.(call|run|Popen).*shell\\s*=\\s*True"
+        message: "subprocess调用使用shell=True存在命令注入风险"
+    fixSuggestion: |
+      使用列表参数并避免shell=True:
+      subprocess.run(["ls", "-la", user_input], capture_output=True)
+
+  - id: COMMAND_INJECTION_EXEC
+    name: "代码注入风险 (exec)"
+    description: "检测使用exec执行动态代码的情况"
+    category: injection
+    severity: critical
+    languages:
+      - python
+    cwe: CWE-95
+    owasp: A03:2021
+    enabled: true
+    tags:
+      - code-injection
+      - rce
+    patterns:
+      - pattern: "exec\\s*\\("
+        message: "使用exec()可能导致代码注入"
+    fixSuggestion: |
+      避免执行动态代码，使用安全的替代方案
+
+  - id: COMMAND_INJECTION_EVAL
+    name: "代码注入风险 (eval)"
+    description: "检测使用eval执行动态代码的情况"
+    category: injection
+    severity: critical
+    languages:
+      - python
+      - javascript
+      - typescript
+    cwe: CWE-95
+    owasp: A03:2021
+    enabled: true
+    tags:
+      - code-injection
+      - rce
+    patterns:
+      - pattern: "eval\\s*\\("
+        message: "使用eval()可能导致代码注入"
+    fixSuggestion: |
+      避免使用eval，使用JSON.parse()或ast.literal_eval()等安全替代
+
+  # ============================================================================
+  # XSS 漏洞 (OWASP A03:2021)
+  # ============================================================================
+  
+  - id: XSS_DOCUMENT_WRITE
+    name: "XSS风险 (document.write)"
+    description: "检测使用document.write直接输出内容的情况"
+    category: xss
+    severity: high
+    languages:
+      - javascript
+      - typescript
+    cwe: CWE-79
+    owasp: A03:2021
+    enabled: true
+    tags:
+      - xss
+      - injection
+    patterns:
+      - pattern: "document\\.write\\s*\\("
+        message: "使用document.write可能导致XSS"
+    fixSuggestion: |
+      使用textContent或createElement:
+      element.textContent = userInput;
+
+  - id: XSS_INNERHTML
+    name: "XSS风险 (innerHTML)"
+    description: "检测使用innerHTML直接输出用户输入的情况"
+    category: xss
+    severity: high
+    languages:
+      - javascript
+      - typescript
+    cwe: CWE-79
+    owasp: A03:2021
+    enabled: true
+    tags:
+      - xss
+      - injection
+      - web
+    patterns:
+      - pattern: "\\.innerHTML\\s*="
+        message: "使用innerHTML可能导致XSS"
+    fixSuggestion: |
+      使用textContent或进行HTML编码:
+      element.textContent = userInput;
+
+  - id: XSS_JINJA_AUTOESCAPE_OFF
+    name: "XSS风险 (Jinja2自动转义关闭)"
+    description: "检测Jinja2模板中关闭自动转义的情况"
+    category: xss
+    severity: high
+    languages:
+      - python
+    cwe: CWE-79
+    owasp: A03:2021
+    enabled: true
+    tags:
+      - xss
+      - template
+    patterns:
+      - pattern: "autoescape\\s*=\\s*False"
+        message: "关闭Jinja2自动转义可能导致XSS"
+    fixSuggestion: |
+      保持自动转义开启或使用|safe过滤器仅对可信内容禁用
+
+  # ============================================================================
+  # 敏感信息泄露 (OWASP A01:2021, A07:2021)
+  # ============================================================================
+  
+  - id: HARDCODED_PASSWORD
+    name: "硬编码密码"
+    description: "检测代码中硬编码的密码"
+    category: secrets
+    severity: medium
+    languages:
+      - python
+      - javascript
+      - typescript
+      - go
+      - java
+      - php
+    cwe: CWE-798
+    owasp: A07:2021
+    enabled: true
+    tags:
+      - secrets
+      - credentials
+    patterns:
+      - pattern: "password\\s*[=:]\\s*[\"'][^\"']+[\"']"
+        message: "检测到硬编码密码"
+    fixSuggestion: |
+      将敏感信息移至环境变量:
+      const apiKey = process.env.API_KEY;
+
+  - id: HARDCODED_API_KEY
+    name: "硬编码API密钥"
+    description: "检测代码中硬编码的API密钥"
+    category: secrets
+    severity: medium
+    languages:
+      - python
+      - javascript
+      - typescript
+      - go
+      - java
+      - php
+    cwe: CWE-798
+    owasp: A07:2021
+    enabled: true
+    tags:
+      - secrets
+      - credentials
+    patterns:
+      - pattern: "api[_-]?key\\s*[=:]\\s*[\"'][a-zA-Z0-9_\\-]{16,}[\"']"
+        message: "检测到硬编码API密钥"
+    fixSuggestion: |
+      将敏感信息移至环境变量:
+      const apiKey = process.env.API_KEY;
+
+  - id: HARDCODED_JWT_SECRET
+    name: "硬编码JWT密钥"
+    description: "检测代码中硬编码的JWT签名密钥"
+    category: secrets
+    severity: critical
+    languages:
+      - javascript
+      - typescript
+      - python
+    cwe: CWE-798
+    owasp: A07:2021
+    enabled: true
+    tags:
+      - secrets
+      - jwt
+      - authentication
+    patterns:
+      - pattern: "jwt[_-]?secret\\s*[=:]\\s*[\"'][^\"']+[\"']"
+        message: "检测到硬编码JWT Secret"
+      - pattern: "JWT_SECRET\\s*=\\s*[\"'][^\"']+[\"']"
+        message: "检测到硬编码JWT_SECRET"
+    fixSuggestion: |
+      使用环境变量存储JWT密钥:
+      const jwtSecret = process.env.JWT_SECRET;
+
+  - id: SENSITIVE_LOGGING
+    name: "敏感信息日志泄露"
+    description: "检测可能记录敏感信息的代码"
+    category: secrets
+    severity: medium
+    languages:
+      - python
+      - javascript
+      - typescript
+    cwe: CWE-532
+    owasp: A09:2021
+    enabled: true
+    tags:
+      - secrets
+      - logging
+    patterns:
+      - pattern: "console\\.log\\(.*password"
+        message: "可能记录密码到日志"
+      - pattern: "logger\\.debug\\(.*password"
+        message: "可能记录密码到日志"
+    fixSuggestion: |
+      不要记录敏感信息，如需调试请脱敏处理
+
+  # ============================================================================
+  # 不安全的反序列化 (OWASP A08:2021)
+  # ============================================================================
+  
+  - id: INSECURE_DESERIALIZATION_PICKLE
+    name: "不安全的反序列化 (pickle)"
+    description: "检测使用pickle反序列化不可信数据的情况"
+    category: deserialization
+    severity: critical
+    languages:
+      - python
+    cwe: CWE-502
+    owasp: A08:2021
+    enabled: true
+    tags:
+      - deserialization
+      - rce
+    patterns:
+      - pattern: "pickle\\.loads\\s*\\("
+        message: "pickle.loads可能导致远程代码执行"
+      - pattern: "pickle\\.load\\s*\\("
+        message: "pickle.load可能导致远程代码执行"
+    fixSuggestion: |
+      使用安全的序列化格式如JSON:
+      data = json.loads(json_string)
+
+  - id: INSECURE_DESERIALIZATION_YAML
+    name: "不安全的YAML加载"
+    description: "检测使用yaml.load加载不可信数据的情况"
+    category: deserialization
+    severity: high
+    languages:
+      - python
+    cwe: CWE-502
+    owasp: A08:2021
+    enabled: true
+    tags:
+      - deserialization
+      - yaml
+    patterns:
+      - pattern: "yaml\\.load\\s*\\("
+        message: "yaml.load()可能不安全，应使用yaml.safe_load()"
+    fixSuggestion: |
+      使用yaml.safe_load():
+      config = yaml.safe_load(yaml_string)
+
+  # ============================================================================
+  # 认证和授权问题 (OWASP A07:2021, A01:2021)
+  # ============================================================================
+  
+  - id: WEAK_PASSWORD_HASH
+    name: "弱密码哈希"
+    description: "检测使用弱哈希算法存储密码的情况"
+    category: crypto
+    severity: high
+    languages:
+      - python
+      - javascript
+      - typescript
+    cwe: CWE-328
+    owasp: A02:2021
+    enabled: true
+    tags:
+      - crypto
+      - authentication
+    patterns:
+      - pattern: "hashlib\\.md5\\s*\\("
+        message: "使用MD5哈希密码是不安全的"
+      - pattern: "hashlib\\.sha1\\s*\\("
+        message: "使用SHA1哈希密码是不安全的"
+      - pattern: "crypto\\.createHash\\s*\\([\"']md5[\"']\\)"
+        message: "使用MD5哈希不安全"
+    fixSuggestion: |
+      使用强哈希算法:
+      import bcrypt
+      hashed = bcrypt.hashpw(password, bcrypt.gensalt())
+
+  - id: WEAK_RANDOM
+    name: "弱随机数生成"
+    description: "检测在安全上下文中使用弱随机数生成器的情况"
+    category: crypto
+    severity: medium
+    languages:
+      - python
+      - javascript
+    cwe: CWE-338
+    owasp: A02:2021
+    enabled: true
+    tags:
+      - crypto
+      - randomness
+    patterns:
+      - pattern: "random\\.random\\s*\\("
+        message: "random.random()不适合安全用途"
+      - pattern: "Math\\.random\\s*\\("
+        message: "Math.random()不适合安全用途"
+    fixSuggestion: |
+      使用密码学安全的随机数生成器:
+      import secrets
+      token = secrets.token_hex(32)
+
+  # ============================================================================
+  # XXE 漏洞 (OWASP A05:2021)
+  # ============================================================================
+  
+  - id: XXE_XML_PARSER
+    name: "XXE风险 (XML解析)"
+    description: "检测不安全的XML解析配置"
+    category: xxe
+    severity: high
+    languages:
+      - python
+      - java
+    cwe: CWE-611
+    owasp: A05:2021
+    enabled: true
+    tags:
+      - xxe
+      - xml
+    patterns:
+      - pattern: "xml\\.etree\\.ElementTree\\.parse"
+        message: "ElementTree解析可能受XXE攻击"
+    fixSuggestion: |
+      禁用外部实体:
+      from defusedxml.ElementTree import parse
+
+  # ============================================================================
+  # SSRF 漏洞 (OWASP A10:2021)
+  # ============================================================================
+  
+  - id: SSRF_REQUESTS
+    name: "SSRF风险"
+    description: "检测可能受SSRF攻击的HTTP请求"
+    category: ssrf
+    severity: high
+    languages:
+      - python
+      - javascript
+      - typescript
+    cwe: CWE-918
+    owasp: A10:2021
+    enabled: true
+    tags:
+      - ssrf
+      - network
+    patterns:
+      - pattern: "requests\\.get\\s*\\(\\s*[a-zA-Z_]+\\s*\\)"
+        message: "使用变量URL可能导致SSRF"
+      - pattern: "axios\\.get\\s*\\(\\s*[a-zA-Z_]+\\s*\\)"
+        message: "使用变量URL可能导致SSRF"
+    fixSuggestion: |
+      验证和限制请求的URL:
+      if not is_allowed_url(user_url):
+          raise ValueError("URL not allowed")
+
+  # ============================================================================
+  # 路径遍历 (OWASP A01:2021)
+  # ============================================================================
+  
+  - id: PATH_TRAVERSAL_OPEN
+    name: "路径遍历风险"
+    description: "检测可能受路径遍历攻击的文件操作"
+    category: path-traversal
+    severity: high
+    languages:
+      - python
+      - javascript
+      - typescript
+    cwe: CWE-22
+    owasp: A01:2021
+    enabled: true
+    tags:
+      - path-traversal
+      - file-access
+    patterns:
+      - pattern: "open\\s*\\(\\s*[a-zA-Z_]+\\s*\\+"
+        message: "拼接文件路径可能导致路径遍历"
+    fixSuggestion: |
+      验证文件路径:
+      import os
+      safe_path = os.path.join(base_dir, os.path.basename(user_input))
+
+  # ============================================================================
+  # 安全配置问题
+  # ============================================================================
+  
+  - id: DEBUG_MODE_ENABLED
+    name: "生产环境调试模式"
+    description: "检测生产环境中启用调试模式的情况"
+    category: configuration
+    severity: medium
+    languages:
+      - python
+      - javascript
+      - typescript
+    cwe: CWE-215
+    owasp: A05:2021
+    enabled: true
+    tags:
+      - configuration
+      - debug
+    patterns:
+      - pattern: "debug\\s*=\\s*True"
+        message: "启用调试模式可能泄露敏感信息"
+      - pattern: "DEBUG\\s*=\\s*true"
+        message: "启用调试模式可能泄露敏感信息"
+    fixSuggestion: |
+      在生产环境中禁用调试模式:
+      DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+
+  - id: CORS_WILDCARD
+    name: "CORS配置过于宽松"
+    description: "检测CORS配置为通配符的情况"
+    category: configuration
+    severity: medium
+    languages:
+      - javascript
+      - typescript
+      - python
+    cwe: CWE-942
+    owasp: A05:2021
+    enabled: true
+    tags:
+      - cors
+      - configuration
+    patterns:
+      - pattern: "Access-Control-Allow-Origin.*\\*"
+        message: "CORS设置为*可能不安全"
+    fixSuggestion: |
+      限制CORS来源:
+      CORS_ALLOWED_ORIGINS = ['https://example.com']
+
+  # ============================================================================
+  # 不安全重定向
+  # ============================================================================
+  
+  - id: REDIRECT_UNSAFE
+    name: "不安全的重定向"
+    description: "检测可能受开放重定向攻击的代码"
+    category: security
+    severity: medium
+    languages:
+      - javascript
+      - typescript
+      - python
+    cwe: CWE-601
+    owasp: A01:2021
+    enabled: true
+    tags:
+      - redirect
+      - phishing
+    patterns:
+      - pattern: "res\\.redirect\\s*\\(\\s*req\\.(query|body)"
+        message: "使用用户输入进行重定向可能导致钓鱼攻击"
+    fixSuggestion: |
+      验证重定向URL:
+      if not is_safe_redirect(url):
+          return redirect('/home')
+
+config:
+  minSeverity: low
+  exclude:
+    - "**/test/**"
+    - "**/tests/**"
+    - "**/__tests__/**"
+    - "**/*.test.*"
+    - "**/*.spec.*"
+    - "**/node_modules/**"
+    - "**/vendor/**"
