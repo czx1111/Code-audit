@@ -481,3 +481,6 @@ export class RustParser implements Parser {
 **⭐ 如果这个项目对你有帮助，请给一个 Star！⭐**
 
 </div>
+
+欢迎大家关注微信公众号，获取更多技术分享。
+
