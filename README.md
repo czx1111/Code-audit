@@ -483,4 +483,5 @@ export class RustParser implements Parser {
 </div>
 
 欢迎大家关注微信公众号，获取更多技术分享。
+![qrcode_for_gh_19fda9b4ef1b_258](https://github.com/user-attachments/assets/b3bfbc4a-2652-49f7-976c-a63ec9be8ae0)
 
